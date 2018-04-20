@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-int MAX_STRING_SIZE =20;
+int MAX_STRING_SIZE =21;
 
 void printUsage(char appName[]);
 int generateString(int,char *); 
@@ -47,11 +47,11 @@ int main(int argc,char *argv[]){
 }
 
 void printUsage(char appName[]){
-	printf("%s%s%s\n","Usage:",appName," -c|i|f -n -f a.out");
+	printf("%s%s%s\n","Usage:",appName," s|i|f n -f a.out");
 }
 
 int generateString(int rowSize,char *fileName){
-	int i=0,j=0,k=0,randomColSize=0;
+	int i=0,j=0,k=0,randomColSize=0,randVal=0;
 	char randomString[MAX_STRING_SIZE+1];
 	char randomChar = '\0';
 	FILE *fp;
@@ -59,7 +59,7 @@ int generateString(int rowSize,char *fileName){
     
 	fp=fopen(fileName,"w");
 	for(i=0;i<rowSize;i++){
-		for(k=0;randomString[k]!='\0';k++)
+		for(k=0;k<MAX_STRING_SIZE;k++)
 			randomString[k]=0;
 		randomColSize = rand()%MAX_STRING_SIZE;
 		if(randomColSize == 0)
@@ -67,7 +67,10 @@ int generateString(int rowSize,char *fileName){
 		for(j=0;j<randomColSize;j++){
 			clock_gettime(CLOCK_REALTIME,&time_ns);
 			srand(time_ns.tv_nsec);
-			randomString[j] =rand()%2?(rand()%26+65):(rand()%26+97);
+			randVal = rand();
+			randomString[j] = abs(randVal%26) + (abs(randVal%2)?65:97);
+			if(randomString[j] < 65)
+				printf("%d  %d   %d",randVal,randVal%26,randomString[j]);
 		}
 		randomString[j] = '\n';
 		//printf("%s \n",dataArray[i]);

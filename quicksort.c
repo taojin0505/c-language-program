@@ -3,11 +3,13 @@
 #include<string.h>
 #include<time.h>
 
-static int MAX_STRING_LENGTH = 20;
+static int MAX_STRING_LENGTH = 22;
+static char *outFileName = "b.out";
 
 void quickSortString(int,char []);
-int randQuickSortString(char *dataArray[],int p,int r);
-int randPartition(char *dataArray[],int p,int r);
+int randQuickSortString(char *dataArray[MAX_STRING_LENGTH],int p,int r);
+int randPartition(char *dataArray[MAX_STRING_LENGTH ],int p,int r);
+char *strdup1(char const *string);
 
 int main(int argc,char *argv[]){
 	char *fileName, dataType;
@@ -30,69 +32,141 @@ int main(int argc,char *argv[]){
 	return 0;
 }
 
+char *strdup1(char const *string){
+	char *new_string;
+
+	new_string = malloc( (strlen( string)) * sizeof(char) );
+	if( new_string != NULL)
+		strcpy(new_string, string);
+	return new_string;
+};
+
 void quickSortString(int dataSize,char fileName[]){
-	char stringData[dataSize][MAX_STRING_LENGTH]; 
-	char *stringDataPointer[dataSize]; 
+	char **stringData = (char **)malloc(dataSize * sizeof(char *));
+	char tmpString[MAX_STRING_LENGTH]; 
 	FILE *fp = fopen(fileName,"r");
-	int i=0;
+	FILE *fpw = fopen(outFileName,"w");
+	int i=0,p=0,r=dataSize-1,k=0,t=0;
 	long usednsec;
 	struct timespec startTime,endTime;
+	long *positionArray = (long * )malloc(dataSize * sizeof(long));
 
-	for(i=0;fgets(stringData[i],MAX_STRING_LENGTH,fp) != NULL;i++)
-		printf("%s",stringData[i]);
-		;
-	for(i=0;i<dataSize;i++)
-		stringDataPointer[i]=stringData[i];
+	for(i=0;fgets(tmpString,MAX_STRING_LENGTH,fp) != NULL;i++){
+		stringData[i] = strdup1(tmpString);
+	//	printf("%d  %s",i+1,stringData[i]);
+	}
 
 	clock_gettime(CLOCK_REALTIME,&startTime);
 
-	randQuickSortString(stringDataPointer,0,dataSize);
+	//randQuickSortString(stringData,0,dataSize-1);
+
+	for(i=0;i<dataSize;i++)
+		positionArray[i] = -1;
+	k=r;
+	while(p<r){
+	//	printf("before: p  %d  k  %d  i %d\n",p,k,i);
+		i = randPartition(stringData,p,k);
+	//	printf("after :p  %d  k  %d  i %d\n",p,k,i);
+	//	printf("out \n");
+	//	for(t=p;t<=10 && k<10;t++)
+	//		printf("  %d   %d ",t,positionArray[t]);
+	//	printf("\n");
+		if(k<p)
+			exit(0);
+		positionArray[i] = i;
+		if(i == p+1){
+			if( i == k || i == k-1){
+				positionArray[p] = p;
+			//	printf("in  \n");
+			//	for(t=p;t<=10 && k<10;t++)
+			//		printf("  %d   %d ",t,positionArray[t]);
+			//	printf("\n");
+				if(i == k-1)
+					positionArray[k] = k;
+				while(p++ < r)
+					if(positionArray[p] <0 && positionArray[p+1] < 0 )
+						break;
+					else
+						positionArray[p] = p;
+				for(k = p ; positionArray[k] < 0 && k <= r;k++);
+				k--;
+			}else
+				p = i+1;
+		}else if( i > p+1){
+			k = i-1;
+		}else
+			if(i<k-1)
+				p = i+1;
+			else{
+				positionArray[k] = k;
+				while(p++ < r)
+					if(positionArray[p] <0 && positionArray[p+1] < 0 )
+						break;
+					else
+						positionArray[p] = p;
+				for(k = p ; positionArray[k] < 0 && k <= r;k++);
+				k--;
+			}
+	}
 
 	clock_gettime(CLOCK_REALTIME,&endTime);
 	usednsec = (endTime.tv_sec-startTime.tv_sec)*1000000000+endTime.tv_nsec-startTime.tv_nsec;
 	printf("use time : %ld ns\n",usednsec);
-	for(i=0;i<dataSize;i++)
-		printf("%s",stringDataPointer[i]);
+	for(i=0;i<dataSize;i++){
+	//	printf("%d  %s \n",i,stringData[i]);
+		fputs(stringData[i],fpw);
+		free(stringData[i]);
+	}
+
+	free(*stringData);
+	free(positionArray);
+	if((i=fclose(fp))!=0)
+		printf("close failed,err code %d",i);
+	fclose(fpw);
 }
 
-int randQuickSortString(char *dataArray[],int p,int r){
+int randQuickSortString(char *dataArray[MAX_STRING_LENGTH ],int p,int r){
 	int i =0;
 
 	if(p<r){
 		i = randPartition(dataArray,p,r);
-		if(i==p)
-			return 0;
-		randQuickSortString(dataArray,p,i-1);
-		randQuickSortString(dataArray,i,r);
+	//	printf("p  %d  r  %d  rand  %d\n",p,r,i);
+		randQuickSortString(dataArray,p,i);
+		randQuickSortString(dataArray,i+1,r);
 	}
 }
 
-int randPartition(char *dataArray[],int p,int r){
+int randPartition(char *dataArray[MAX_STRING_LENGTH ],int p,int r){
 	int randVal =0,k=0;
 	char *mainVal,*tmpVal;
-	int i=p-1,j=p;
+	int i=p,j=p;
 	struct timespec time_ns;
 
-	if(p==r)
-		return p;
 	clock_gettime(CLOCK_REALTIME,&time_ns);
 	srand(time_ns.tv_nsec);
-	randVal = p+rand()%(r-p);
-	printf("p  %d  r  %d   %d\n",p,r,randVal);
+	randVal = p + abs(rand()%(r-p));
 	mainVal = dataArray[randVal];
-	dataArray[randVal]=dataArray[r-1];
-	dataArray[r-1]=mainVal;
-	for(j=p;j<r-1;j++){
+	dataArray[randVal] = dataArray[r];
+	dataArray[r] = mainVal;
+	//for(k=p;k<=r;k++)
+	//	printf("%s",dataArray[k]);
+	for(j=p;j<r;j++){
+	//	printf("p  %d  r  %d  rand  %d\n",p,r,randVal);
+	//	printf("array : j %d , %s ; mainval : %s  i  %d  \n",j,dataArray[j],mainVal,i);
 		if(strcmp(dataArray[j],mainVal) <= 0){
+			if(j != i){
+	//			printf("i  %d  j  %d\n",i,j);
+				tmpVal = dataArray[i];
+				dataArray[i] = dataArray[j];
+				dataArray[j] = tmpVal;
+			}
 			i = i + 1;
-			printf("i  %d  j  %d\n",i,j);
-			tmpVal = dataArray[i];
-			dataArray[i]=dataArray[j];
-			dataArray[j] = tmpVal;
 		}
 	}
-	randVal =i;
-	for(k=p-1;k<r;k++)
-		printf("%s",dataArray[k]);
-	return i+1;
+	tmpVal = dataArray[i];
+	dataArray[i] = dataArray[r];
+	dataArray[r] = tmpVal;
+	//for(k=p;k<=r;k++)
+	//	printf("%s",dataArray[k]);
+	return i;
 }
