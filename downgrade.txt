@@ -1,0 +1,2 @@
+aptitude versions '~VCURRENT (~Aunstable|~Aexperimental) !~Atesting' --group-by=none
+aptitude install gcc/stable
