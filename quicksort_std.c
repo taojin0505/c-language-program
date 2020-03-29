@@ -10,7 +10,7 @@ void quickSortString(int,char []);
 char *strdup1(char const *string);
 
 int cmpstr(const void *a,const void *b){
-	return strcmp(*(char **)a,*(char **)b);
+	return -1*strcmp(*(char **)a,*(char **)b);
 }
 
 int main(int argc,char *argv[]){
